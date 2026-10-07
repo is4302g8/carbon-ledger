@@ -1,120 +1,103 @@
-# CarbonLedger: A Blockchain Registry for Carbon Credits
-### *Protocol Architecture & Decentralized Settlement Exchange*
+# CarbonLedger
 
-CarbonLedger is an enterprise-grade Web3 protocol built with **Hardhat 3** that eliminates double counting and solves credit quality risks in voluntary and compliance carbon markets.
+A smart contract system for carbon credit issuance, verification, and retirement on Ethereum.
 
----
+## Overview
 
-## Architecture Overview
+CarbonLedger tracks carbon credits from initial project registration through verification, trading, and final retirement. It addresses two common problems in carbon credit accounting:
+- **Over-crediting / invalid claims:** Validates project boundaries using signed satellite telemetry (EIP-712) and enforces a maximum biomass density check on-chain.
+- **Double counting:** Issues credits as semi-fungible ERC-1155 tokens with a dedicated burn function for retirement.
 
-1. **`MockUSDC.sol`**:
-   - ERC-20 stablecoin (6 decimals) with an interactive faucet for bonds, stakes, and marketplace settlements.
-2. **`CarbonCreditToken.sol`**:
-   - Semi-fungible **ERC-1155** token encoding `(projectId << 32) | vintageYear`.
-   - Overridden `_update` transfer hook enforcing KYC/compliance participant registration.
-   - Dedicated `retire()` function that permanently burns credits and emits public offset certificates.
-3. **`CarbonRegistry.sol`**:
-   - Participant role directory (Developer, Verifier, Watchdog, Jurors, Satellite Provider, Buyer).
-   - **EIP-712 Satellite Cryptographic Attestation** enforcing on-chain physical plausibility bounds ($\text{Claimed} \le \text{Hectares} \times \text{MaxDensity}$).
-   - Parameterized challenge window and jury dispute chamber.
-   - Anti-collusion slashing: 50% to Watchdog bounty, 50% to Protocol Insurance Buffer Reserve.
-   - Automated issuance applying **80% conservative crediting** and **10% buffer pool reserve**.
-4. **`Marketplace.sol`**:
-   - Peer-to-peer exchange for ERC-1155 carbon credits with atomic USDC settlement.
+The system also includes an economic dispute mechanism: verifiers stake collateral to endorse projects, and third-party challengers can dispute claims during a challenge window. Disputed projects are reviewed and voted on by registered jurors, with slashed collateral split between the challenger and an insurance reserve pool.
 
----
+## Contracts
 
-## Quick Start (Zero Setup)
+- `CarbonRegistry.sol`: Core registry contract. Manages participant roles, project submissions, verifier staking, dispute challenges, juror voting, and token issuance calculations (80% baseline issuance, 10% allocated to an insurance buffer pool).
+- `CarbonCreditToken.sol`: ERC-1155 token representing verified credits. Token IDs are encoded as `(projectId << 32) | vintageYear`. Includes a `retire()` function that permanently burns credits and emits retirement metadata.
+- `Marketplace.sol`: Escrow contract for listing and purchasing ERC-1155 carbon credits with USDC settlement.
+- `MockUSDC.sol`: Standard ERC-20 token (6 decimals) used for bonds, stakes, and marketplace settlements in local development.
 
-Once you clone the repository, run the automated launcher:
+## Setup
 
-### Windows (1-Click)
-Double-click **`start-demo.bat`** (or run `.\start-demo.bat` in terminal).
-* Automatically installs dependencies if missing (`npm install`).
-* Automatically boots the local blockchain node on port 8545.
-* Automatically deploys and configures contracts.
-* Launches the interactive dashboard at **`http://localhost:3000`** in your browser.
+### Prerequisites
 
-### macOS / Linux (1-Click)
-Run in terminal:
+- Node.js >= 18
+- npm
+
+### Installation
+
 ```bash
-chmod +x start-demo.sh && ./start-demo.sh
+git clone https://github.com/<username>/carbon-ledger.git
+cd carbon-ledger
+npm install
 ```
 
----
+## Running Tests
 
-## Manual Terminal Workflow
+Run the Hardhat test suite:
 
-If you prefer running commands manually:
-
-1. **Install Dependencies:** `npm install`
-2. **Run Test Suite:** `npm test`
-3. **Start Node:** `npm run node`
-4. **Deploy Contracts:** `npm run deploy`
-5. **Launch GUI:** `npm run gui` (open `http://localhost:3000`)
-Executes all 9 unit and scenario tests covering Happy Path, Watchdog Slashing, Frivolous Challenges, Satellite Bounds, and Compliance Invariants:
 ```bash
-npm test
+npx hardhat test
 ```
 
-### 2. Start the Local Blockchain Node
+The test suite covers project submission, satellite signature verification, density limit checks, verifier staking, dispute challenge/resolution flows, and marketplace purchases.
+
+## Running Locally
+
+### Option 1: Automated Script
+
+- **Windows:** Double-click `start-demo.bat` (or run `.\start-demo.bat` in PowerShell/cmd).
+- **macOS / Linux:** Run `./start-demo.sh`.
+
+The script installs dependencies if missing, starts a local Hardhat node, deploys the contracts, and launches the web interface at `http://localhost:3000`.
+
+### Option 2: Manual Steps
+
+1. Start the local node:
 ```bash
-npm run node
+npx hardhat node
 ```
 
-### 3. Deploy Contracts
-In a new terminal window:
+2. In a separate terminal, compile and deploy the contracts:
 ```bash
-npm run deploy
+npx hardhat run scripts/deploy.ts --network localhost
 ```
 
-### 4. Launch the Interactive GUI
-Start the local demo web dashboard:
+3. Start the local frontend server:
 ```bash
-npm run gui
+node serve-gui.js
 ```
-Then open your browser at **`http://localhost:3000`**.
 
----
+Open `http://localhost:3000` in your browser.
 
-## How to Close & Reset the Demo for a Fresh Run
+## Resetting State
 
-Because Hardhat runs in memory, resetting the entire state takes only a few seconds:
+To wipe local chain state and redeploy fresh contracts:
 
-### Method 1: The One-Command Reset (Fastest)
-Keep your node and GUI running, and run this single command in a terminal:
 ```bash
 npm run reset
 ```
-Then press **`F5`** in your browser. All transactions, balances, and projects are wiped clean back to initial state.
 
-### Method 2: Restarting the Node
-1. In the terminal running `npm run node`, press **`Ctrl + C`** to shut it down.
-2. Start it again: `npm run node` (this gives you a brand new, empty blockchain).
-3. In your other terminal, redeploy fresh contracts: `npm run deploy`
-4. Refresh the browser page (`F5`).
+Or click the "Reset Demo" button in the web dashboard navigation bar.
 
-### Method 3: In-GUI Reset Button
-Click the red **"Reset Demo"** button in the top navigation bar of the web dashboard.
+## Project Structure
 
----
-
-## Interactive Demonstration Workflow in the GUI
-
-1. **Switch Role to Developer (Alice):**
-   - Click *Faucet +5k USDC* to get demo collateral.
-   - Review prefilled project parameters (Borneo Peatland Reforestation).
-   - Click *Sign with Sentinel Provider* to generate EIP-712 satellite telemetry.
-   - Click *Bond $1,000 & Submit Claim*.
-2. **Switch Role to Accredited Verifier:**
-   - In Tab 2, click *Stake $500 & Approve*.
-   - Project transitions to `VERIFIED` and the challenge window begins.
-3. **Watchdog Challenge or Finalize:**
-   - **Option A (No Dispute):** Click *Finalize Issuance*. The contract mints 80% conservative credits, deposits 10% into the buffer pool, and delivers 72% directly to the developer.
-   - **Option B (Watchdog Dispute):** Click *Post $500 Bond & Challenge*. Switch to Jurors, cast votes, and click *Resolve Dispute & Execute Slashing* to demonstrate the 50/50 reward/insurance split.
-4. **Marketplace Trading (Developer + Buyer):**
-   - In Tab 4, developer lists 100 credits for $25 USDC each.
-   - Switch role to Corporate Buyer, click *Buy 50 Credits*, and observe atomic settlement.
-5. **Retirement & Certificate Generator:**
-   - In Tab 5, enter Beneficiary Name (e.g., "Apple Inc.") and Offset Reason.
-   - Click *Burn Credits & Generate Certificate* to permanently burn tokens and view the live on-chain Certificate of Retirement!
+```
+contracts/              # Solidity contracts
+├── CarbonCreditToken.sol
+├── CarbonRegistry.sol
+├── Marketplace.sol
+└── MockUSDC.sol
+scripts/                # Deployment and reset scripts
+├── deploy.ts
+└── reset.js
+test/                   # Test suite
+└── CarbonLedger.test.ts
+frontend/               # Web interface (HTML/JS)
+├── app.js
+├── contracts.js
+└── index.html
+start-demo.bat          # Windows startup script
+start-demo.sh           # Unix startup script
+serve-gui.js            # Minimal static file server and reset API
+```

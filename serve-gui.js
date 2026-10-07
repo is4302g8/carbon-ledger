@@ -49,13 +49,13 @@ function resetBlockchain() {
         nodeRes.on("data", (chunk) => (body += chunk));
         nodeRes.on("end", () => {
           // 2. Deploy fresh contracts to localhost node and sync frontend
-          console.log("✓ Hardhat node responsive at 127.0.0.1:8545. Redeploying clean protocol state...");
+          console.log("Redeploying contracts...");
           exec("npx hardhat run scripts/deploy.ts --network localhost", { maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
             if (err) {
               console.error("Deploy error:", stderr || err);
               return reject(new Error(stderr || err.message));
             }
-            console.log("✓ Fresh contracts deployed to localhost and frontend synced successfully!");
+            console.log("Contracts deployed successfully.");
             resolve(stdout);
           });
         });
@@ -136,9 +136,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🌿 CarbonLedger Interactive GUI running at:`);
-  console.log(`👉 http://localhost:${PORT}`);
-  console.log(`   (Automatic 1-Click Reset API enabled at /api/reset)`);
-  console.log(`=======================================================`);
+  console.log(`CarbonLedger frontend running at http://localhost:${PORT}`);
 });

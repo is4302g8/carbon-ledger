@@ -471,7 +471,7 @@ window.auditProject = async function (id) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await registryContract.verifyProject(id, { nonce });
     await tx.wait();
-    alert(`Project #${id} successfully audited and endorsed! $500 USDC staked.`);
+    alert(`Project #${id} verified.`);
     await refreshState();
   } catch (err) {
     alert("Audit error: " + (err.reason || err.message));
@@ -486,7 +486,7 @@ window.challengeProject = async function (id) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await registryContract.challengeProject(id, evidenceHash, { nonce });
     await tx.wait();
-    alert(`Dispute filed on Project #${id} with $500 USDC challenge bond!`);
+    alert(`Dispute filed on Project #${id}.`);
     await refreshState();
   } catch (err) {
     alert("Challenge error: " + (err.reason || err.message));
@@ -505,7 +505,7 @@ window.finalizeProject = async function (id) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await registryContract.finalizeApprovedProject(id, { nonce });
     await tx.wait();
-    alert(`Project #${id} finalized! Credits minted (80% conservative, 10% buffer, 72% developer).`);
+    alert(`Project #${id} approved. Credits minted.`);
     await refreshState();
   } catch (err) {
     alert("Finalize error: " + (err.reason || err.message));
@@ -520,7 +520,7 @@ window.jurorVote = async function (id, isFraud) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await registryContract.voteOnDispute(id, isFraud, { nonce });
     await tx.wait();
-    alert(`Juror vote submitted: ${isFraud ? "FRAUDULENT" : "LEGITIMATE"}`);
+    alert(`Vote submitted: ${isFraud ? "FRAUDULENT" : "LEGITIMATE"}`);
     await refreshState();
   } catch (err) {
     alert("Vote error: " + (err.reason || err.message));
@@ -539,7 +539,7 @@ window.resolveDispute = async function (id) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await registryContract.resolveDispute(id, { nonce });
     await tx.wait();
-    alert(`Dispute resolved! Slashing & reward distribution executed.`);
+    alert(`Dispute resolved.`);
     await refreshState();
   } catch (err) {
     alert("Resolve error: " + (err.reason || err.message));
@@ -554,7 +554,7 @@ window.buyListing = async function (listingId, amount) {
     const nonce = await getFreshNonce(activeSigner.address);
     const tx = await marketplaceContract.buyCredits(listingId, amount, { nonce });
     await tx.wait();
-    alert(`Successfully purchased ${amount} credits atomically for $1,250 USDC!`);
+    alert(`Purchased ${amount} credits.`);
     await refreshState();
   } catch (err) {
     alert("Purchase error: " + (err.reason || err.message));
@@ -646,7 +646,7 @@ function setupEventListeners() {
       const nonce = await getFreshNonce(activeSigner.address);
       const tx = await registryContract.submitProject(input, { nonce });
       await tx.wait();
-      alert(`Project #${projId} successfully registered on-chain with $1,000 USDC developer bond!`);
+      alert(`Project #${projId} registered.`);
       activeAttestation = null;
       document.getElementById("signatureDisplay").innerText = "Attestation verified and project active";
       await refreshState();
@@ -684,7 +684,7 @@ function setupEventListeners() {
       const nonce2 = await getFreshNonce(activeSigner.address);
       const tx = await marketplaceContract.createListing(tokenId, amt, price, { nonce: nonce2 });
       await tx.wait();
-      alert(`Listed ${amt} credits on marketplace at $${ethers.formatUnits(price, 6)}/tCO₂e!`);
+      alert(`Listed ${amt} credits for sale.`);
       await refreshState();
     } catch (err) {
       console.error("Listing error:", err);
@@ -714,7 +714,7 @@ function setupEventListeners() {
       document.getElementById("certReason").innerText = reason;
       document.getElementById("statRetiredCredits").innerText = `${amt} tCO₂e`;
 
-      alert(`Permanent Retirement Completed! ${amt} credits permanently burned on-chain.`);
+      alert(`Retired ${amt} credits.`);
       await refreshState();
     } catch (err) {
       alert("Retirement error: " + (err.reason || err.message));

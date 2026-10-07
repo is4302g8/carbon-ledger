@@ -8,8 +8,7 @@ async function main() {
   const [deployer, developer, verifier, watchdog, juror1, juror2, satelliteProvider, buyer] =
     await ethers.getSigners();
 
-  console.log("----------------------------------------------------");
-  console.log("Deploying Fresh CarbonLedger Contracts...");
+  console.log("Deploying CarbonLedger contracts...");
   console.log("Deployer:", deployer.address);
 
   // 1. Deploy MockUSDC
@@ -127,9 +126,8 @@ async function main() {
 
   fs.writeFileSync(path.join(frontendDir, "contracts.js"), jsContent);
 
-  console.log("✓ Updated frontend/deployed-contracts.json & frontend/contracts.js");
-  console.log("✓ Ready for clean demo!");
-  console.log("----------------------------------------------------");
+  console.log("Updated frontend contracts config.");
+  console.log("Deployment complete.");
 }
 
 main().catch((error) => {
