@@ -10,29 +10,29 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
-  getContractFactory(name: 'CarbonCreditToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CarbonCreditToken__factory>
-getContractFactory(name: 'IParticipantRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IParticipantRegistry__factory>
-getContractFactory(name: 'CarbonRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CarbonRegistry__factory>
-getContractFactory(name: 'Marketplace', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Marketplace__factory>
+  getContractFactory(name: 'Marketplace', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Marketplace__factory>
 getContractFactory(name: 'MockUSDC', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockUSDC__factory>
+getContractFactory(name: 'CarbonRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CarbonRegistry__factory>
+getContractFactory(name: 'CarbonCreditToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CarbonCreditToken__factory>
+getContractFactory(name: 'IParticipantRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IParticipantRegistry__factory>
 
-  getContractAt(name: 'CarbonCreditToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CarbonCreditToken>
-getContractAt(name: 'IParticipantRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IParticipantRegistry>
-getContractAt(name: 'CarbonRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CarbonRegistry>
-getContractAt(name: 'Marketplace', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Marketplace>
+  getContractAt(name: 'Marketplace', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Marketplace>
 getContractAt(name: 'MockUSDC', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockUSDC>
+getContractAt(name: 'CarbonRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CarbonRegistry>
+getContractAt(name: 'CarbonCreditToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CarbonCreditToken>
+getContractAt(name: 'IParticipantRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IParticipantRegistry>
 
-  deployContract(name: 'CarbonCreditToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonCreditToken>
-deployContract(name: 'IParticipantRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IParticipantRegistry>
-deployContract(name: 'CarbonRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonRegistry>
-deployContract(name: 'Marketplace', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Marketplace>
+  deployContract(name: 'Marketplace', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Marketplace>
 deployContract(name: 'MockUSDC', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
+deployContract(name: 'CarbonRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonRegistry>
+deployContract(name: 'CarbonCreditToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonCreditToken>
+deployContract(name: 'IParticipantRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IParticipantRegistry>
 
-  deployContract(name: 'CarbonCreditToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonCreditToken>
-deployContract(name: 'IParticipantRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IParticipantRegistry>
-deployContract(name: 'CarbonRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonRegistry>
-deployContract(name: 'Marketplace', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Marketplace>
+  deployContract(name: 'Marketplace', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Marketplace>
 deployContract(name: 'MockUSDC', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
+deployContract(name: 'CarbonRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonRegistry>
+deployContract(name: 'CarbonCreditToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CarbonCreditToken>
+deployContract(name: 'IParticipantRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IParticipantRegistry>
 
     // default types
     getContractFactory(
