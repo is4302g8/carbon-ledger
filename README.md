@@ -27,7 +27,7 @@ The system also includes an economic dispute mechanism: verifiers stake collater
 ### Installation
 
 ```bash
-git clone https://github.com/<username>/carbon-ledger.git
+git clone https://github.com/is4302g8/carbon-ledger.git
 cd carbon-ledger
 npm install
 ```
