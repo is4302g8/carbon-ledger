@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarbonLedger | Decentralized Carbon Credit Registry & Settlement Protocol</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Ethers.js v6 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f17; color: #f1f5f9; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .dark-card { background: #111723; border: 1px solid rgba(51, 65, 85, 0.5); }
+    .dark-nav { background: rgba(11, 15, 23, 0.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(51, 65, 85, 0.6); }
+    .badge-primary { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); }
+    .badge-gold { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
+    .badge-alert { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+    .badge-success { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0b0f17] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Navigation & Protocol Control Bar -->
+  <header class="dark-nav sticky top-0 z-50 px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-lg shadow-lg shadow-blue-900/30">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            CarbonLedger
+            <span class="text-[10px] uppercase font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Protocol</span>
+          </h1>
+          <p class="text-xs text-slate-400">Institutional Carbon Credit Registry & Settlement Engine</p>
+        </div>
+      </div>
+
+      <!-- Protocol Role Switcher & Action Controls -->
+      <div class="flex items-center bg-[#151c2c] border border-slate-700/60 rounded-xl p-1.5 space-x-2">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Role:</span>
+        <select id="roleSelector" class="bg-[#0e1420] text-slate-100 text-sm font-medium rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+          <option value="developer">👨‍💻 Developer (Alice)</option>
+          <option value="verifier">🔍 Accredited Verifier (Verra Node)</option>
+          <option value="watchdog">🛡️ Independent Watchdog (Greenpeace)</option>
+          <option value="juror1">⚖️ Accredited Juror 1</option>
+          <option value="juror2">⚖️ Accredited Juror 2</option>
+          <option value="satellite">🛰️ Satellite Telemetry Oracle (Sentinel)</option>
+          <option value="buyer">🏢 Corporate Buyer (TechCorp)</option>
+          <option value="admin">⚙️ Consortium Admin</option>
+        </select>
+        <button id="faucetBtn" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow hover:shadow-blue-600/30">
+          <i class="fa-solid fa-faucet-drip mr-1"></i> Faucet +5k USDC
+        </button>
+        <button id="resetDemoBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow" title="Reset all state for fresh demo">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Reset Demo
+        </button>
+      </div>
+
+      <!-- Connection Status & Live Balance -->
+      <div class="flex items-center space-x-3 text-xs">
+        <div id="nodeStatusPill" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-2">
+          <span id="nodeStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="nodeStatusText" class="font-medium">Connecting...</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span id="activeAddress" class="font-mono text-slate-300">0x...</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center space-x-2">
+          <i class="fa-solid fa-coins text-amber-400"></i>
+          <span id="userUsdcBal" class="font-semibold text-white">0 USDC</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Offline Alert Banner -->
+  <div id="nodeOfflineBanner" class="hidden bg-rose-950/80 border-b border-rose-900 text-rose-200 px-6 py-2.5 text-xs flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+      <span><strong>Blockchain Node Offline:</strong> Cannot reach <code>http://127.0.0.1:8545</code>. In terminal, run: <code class="bg-black/40 px-1.5 py-0.5 rounded font-mono text-amber-300">npm run node</code></span>
+    </div>
+    <button onclick="window.checkNodeAndRefresh()" class="bg-rose-800 hover:bg-rose-700 px-3 py-1 rounded text-white font-semibold text-xs shadow">
+      <i class="fa-solid fa-rotate mr-1"></i> Retry Connection
+    </button>
+  </div>
+
+  <!-- Metric Overview Cards -->
+  <div class="max-w-7xl mx-auto w-full px-6 py-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="dark-card p-5 rounded-2xl flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-certificate"></i>
+      </div>
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Verified Issued Credits</p>
+        <p id="statIssuedCredits" class="text-2xl font-bold text-white tracking-tight">0 tCO₂e</p>
+      </div>
+    </div>
+
+    <div class="dark-card p-5 rounded-2xl flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Buffer Insurance Reserve</p>
+        <p id="statBufferPool" class="text-2xl font-bold text-white tracking-tight">0 tCO₂e</p>
+      </div>
+    </div>
+
+    <div class="dark-card p-5 rounded-2xl flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-vault"></i>
+      </div>
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Protocol Slashed Reserve</p>
+        <p id="statSlashedReserve" class="text-2xl font-bold text-white tracking-tight">$0 USDC</p>
+      </div>
+    </div>
+
+    <div class="dark-card p-5 rounded-2xl flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-fire"></i>
+      </div>
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Total Retired Offsets</p>
+        <p id="statRetiredCredits" class="text-2xl font-bold text-white tracking-tight">0 tCO₂e</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Navigation Tabs -->
+  <div class="max-w-7xl mx-auto w-full px-6">
+    <div class="flex border-b border-slate-800 space-x-2">
+      <button class="nav-tab active-tab px-5 py-3 text-sm font-semibold text-blue-400 border-b-2 border-blue-500 flex items-center space-x-2" data-tab="tab-submit">
+        <i class="fa-solid fa-satellite-dish"></i> <span>1. Project Registration</span>
+      </button>
+      <button class="nav-tab px-5 py-3 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2" data-tab="tab-verify">
+        <i class="fa-solid fa-clipboard-check"></i> <span>2. Auditor Staking</span>
+      </button>
+      <button class="nav-tab px-5 py-3 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2" data-tab="tab-dispute">
+        <i class="fa-solid fa-scale-balanced"></i> <span>3. Dispute & Jury</span>
+      </button>
+      <button class="nav-tab px-5 py-3 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2" data-tab="tab-market">
+        <i class="fa-solid fa-store"></i> <span>4. Exchange</span>
+      </button>
+      <button class="nav-tab px-5 py-3 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2" data-tab="tab-retire">
+        <i class="fa-solid fa-award"></i> <span>5. Offset & Certificate</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Areas -->
+  <main class="max-w-7xl mx-auto w-full px-6 py-6 flex-1">
+
+    <!-- TAB 1: PROJECT REGISTRATION & ORACLE ATTESTATION -->
+    <div id="tab-submit" class="tab-content space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Submission Form (Spans 2 columns) -->
+        <div class="lg:col-span-2 dark-card p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-plus-circle text-blue-400 mr-2"></i> Register New Project Claim
+            </h2>
+            <span class="badge-primary text-xs font-semibold px-2.5 py-1 rounded-full">Developer Role</span>
+          </div>
+
+          <form id="submitProjectForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Project Identifier (ID)</label>
+                <input type="number" id="projId" value="1" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Project Name</label>
+                <input type="text" id="projName" value="Borneo Peatland Reforestation" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Vintage Year</label>
+                <input type="number" id="projVintage" value="2025" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Area (Hectares)</label>
+                <input type="number" id="projHectares" value="200" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Max Biomass Density (t/ha)</label>
+                <input type="number" id="projDensity" value="10" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Claimed Carbon Sequestration (Tonnes)</label>
+              <input type="number" id="projClaimed" value="1000" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <p id="plausibilityStatus" class="text-xs text-emerald-400 mt-1 font-medium">✓ Plausible: Claimed 1,000 t ≤ Max Allowable 2,000 t</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#0e1422] border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-300 flex items-center">
+                  <i class="fa-solid fa-satellite text-blue-400 mr-1.5"></i> EIP-712 Sentinel Telemetry Attestation:
+                </span>
+                <button type="button" id="signAttestationBtn" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-200 font-medium transition-all shadow-sm">
+                  <i class="fa-solid fa-signature mr-1 text-blue-400"></i> Generate Sentinel Signature
+                </button>
+              </div>
+              <p id="signatureDisplay" class="font-mono text-xs text-slate-400 truncate">Pending telemetry signature generation...</p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <span class="text-xs text-slate-400">Required Deposit: <strong class="text-white">$1,000 USDC</strong> developer collateral bond</span>
+              <button type="submit" id="submitProjectBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-blue-900/30 transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-lock"></i> <span>Bond $1,000 & Submit Claim</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Telemetry & Node Live Status Panel (Spans 1 column) -->
+        <div class="dark-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-tower-broadcast text-blue-400 mr-2"></i> Oracle & Node Status
+            </h3>
+            <span class="badge-success text-[10px] font-mono px-2 py-0.5 rounded">Synchronized</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="p-3 rounded-xl bg-[#0d121c] border border-slate-800">
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Active Attestation Provider</p>
+              <p class="font-semibold text-white mt-0.5">Sentinel-2 Earth Observation Node</p>
+              <p class="text-[11px] text-slate-400 font-mono mt-0.5">0x976E...0aa9</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#0d121c] border border-slate-800">
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Cryptographic Standard</p>
+              <p class="font-semibold text-white mt-0.5">EIP-712 Typed Structured Hashing</p>
+              <p class="text-[11px] text-slate-400 font-mono mt-0.5">CarbonLedgerRegistry v1.0</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#0d121c] border border-slate-800">
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Protocol Collateralization</p>
+              <div class="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <span class="text-slate-400 text-[10px]">Developer Bond:</span>
+                  <p class="font-bold text-white">$1,000 USDC</p>
+                </div>
+                <div>
+                  <span class="text-slate-400 text-[10px]">Auditor Stake:</span>
+                  <p class="font-bold text-white">$500 USDC</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#0d121c] border border-slate-800">
+              <p class="text-slate-400 text-[10px] uppercase font-semibold">Issuance Distribution</p>
+              <div class="flex items-center justify-between text-[11px] text-slate-300 mt-1">
+                <span>Developer Yield:</span>
+                <span class="font-semibold text-blue-400">72%</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-300 mt-0.5">
+                <span>Buffer Pool Reserve:</span>
+                <span class="font-semibold text-indigo-400">10%</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-300 mt-0.5">
+                <span>Conservative Adjustment:</span>
+                <span class="font-semibold text-slate-400">80% baseline</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: AUDIT & STAKING -->
+    <div id="tab-verify" class="tab-content hidden space-y-6">
+      <div class="dark-card p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-user-check text-blue-400 mr-2"></i> Pending Auditor Verification
+          </h2>
+          <span class="badge-gold text-xs font-semibold px-2.5 py-1 rounded-full">Verifier Role Required</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">Accredited auditors independently inspect evidence reports. To endorse a project, the auditor must lock a $500 USDC stake that is slashed if later proven fraudulent.</p>
+
+        <div id="pendingVerificationList" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: WATCHDOG & JURY DISPUTE -->
+    <div id="tab-dispute" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Watchdog Challenge Chamber -->
+        <div class="dark-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-shield-cat text-amber-400 mr-2"></i> Challenge Window
+            </h2>
+            <span class="badge-gold text-xs font-semibold px-2.5 py-1 rounded-full">Watchdog Role</span>
+          </div>
+          <p class="text-xs text-slate-400">Anyone can dispute an inflated claim during the challenge window by posting a $500 USDC dispute bond.</p>
+
+          <div id="verifiedProjectsList" class="space-y-3">
+            <!-- Project under challenge dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Jury Chamber & Slashing -->
+        <div class="dark-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-gavel text-indigo-400 mr-2"></i> Jury Voting Chamber
+            </h2>
+            <span class="badge-primary text-xs font-semibold px-2.5 py-1 rounded-full">Juror Role</span>
+          </div>
+          <p class="text-xs text-slate-400">Disputes are resolved by accredited jurors. Slashing awards 50% to the watchdog and 50% to the insurance reserve pool.</p>
+
+          <div id="activeDisputesList" class="space-y-3">
+            <p class="text-xs text-slate-500 italic">No active disputes currently filed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: MARKETPLACE -->
+    <div id="tab-market" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Developer Listing Card -->
+        <div class="dark-card p-6 rounded-2xl space-y-4">
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-tag text-blue-400 mr-2"></i> List Carbon Credits
+          </h2>
+          <p class="text-xs text-slate-400">Deposit verified ERC-1155 credits into marketplace escrow at a fixed USDC price.</p>
+
+          <form id="createListingForm" class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Your Available Token Batches:</label>
+              <select id="userTokenBatches" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs"></select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Quantity to List (tCO₂e)</label>
+              <input type="number" id="listAmount" value="100" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Price per Credit ($USDC)</label>
+              <input type="number" id="listPrice" value="25" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2.5 rounded-xl shadow transition-all">
+              <i class="fa-solid fa-store mr-1"></i> Create Marketplace Listing
+            </button>
+          </form>
+        </div>
+
+        <!-- Active Marketplace Listings -->
+        <div class="lg:col-span-2 dark-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-boxes-stacked text-indigo-400 mr-2"></i> Live Carbon Exchange
+            </h2>
+            <span class="text-xs text-slate-400 font-mono">Atomic DvP Settlement</span>
+          </div>
+
+          <div id="marketplaceListingsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Listings dynamically injected -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: OFFSET & RETIREMENT -->
+    <div id="tab-retire" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Retirement Form -->
+        <div class="dark-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-fire text-rose-500 mr-2"></i> Offset & Burn Credits
+            </h2>
+            <span class="badge-primary text-xs font-semibold px-2.5 py-1 rounded-full">Buyer Offsetting</span>
+          </div>
+          <p class="text-xs text-slate-400">Burning permanently removes credits from circulation, guaranteeing they can never be resold or double counted under Article 6.</p>
+
+          <form id="retireCreditsForm" class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Select Token Batch to Retire:</label>
+              <select id="retireTokenSelect" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs"></select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Amount to Burn (tCO₂e)</label>
+              <input type="number" id="retireAmount" value="25" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Beneficiary Entity (Corporation / Sovereign)</label>
+              <input type="text" id="retireBeneficiary" value="Apple Inc." class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Carbon Offsetting Scope / Justification</label>
+              <input type="text" id="retireReason" value="FY2025 Scope 1 & 2 Neutrality" class="w-full bg-[#0d121c] border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+            <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs py-2.5 rounded-xl shadow-lg shadow-rose-900/30 transition-all flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-burn"></i> <span>Burn Credits & Generate Certificate</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Certificate Preview -->
+        <div class="dark-card p-6 rounded-2xl flex flex-col justify-center items-center text-center">
+          <div id="certificateContainer" class="w-full p-6 rounded-2xl bg-gradient-to-br from-[#0c121e] to-[#141d30] border-2 border-slate-700/70 text-left relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-4">
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Proof of Retirement</span>
+                <h3 class="text-lg font-extrabold text-white">CarbonLedger Official Certificate</h3>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-400/30 flex items-center justify-center text-blue-400 text-lg">
+                <i class="fa-solid fa-award"></i>
+              </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+              <div>
+                <p class="text-slate-400 text-[10px] uppercase font-bold">Beneficiary</p>
+                <p id="certBeneficiary" class="text-base font-bold text-white">Sample Corporation</p>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <p class="text-slate-400 text-[10px] uppercase font-bold">Offset Amount</p>
+                  <p id="certAmount" class="font-bold text-blue-400 text-sm">-- tCO₂e</p>
+                </div>
+                <div>
+                  <p class="text-slate-400 text-[10px] uppercase font-bold">Vintage / Project</p>
+                  <p id="certProject" class="font-bold text-white">--</p>
+                </div>
+              </div>
+              <div>
+                <p class="text-slate-400 text-[10px] uppercase font-bold">Offset Scope</p>
+                <p id="certReason" class="italic text-slate-200">--</p>
+              </div>
+              <div class="border-t border-slate-700/50 pt-2 text-[10px] font-mono text-slate-400 truncate">
+                Status: <span class="text-emerald-400 font-bold">PERMANENTLY BURNED ON-CHAIN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Interactive JavaScript -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

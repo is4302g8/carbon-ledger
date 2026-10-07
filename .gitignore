@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Hardhat build artifacts and cache
+artifacts/
+cache/
+typechain-types/
+
+# Logs and system files
+*.log
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
