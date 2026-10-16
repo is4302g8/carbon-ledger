@@ -21,7 +21,7 @@ The system also includes an economic dispute mechanism: verifiers stake collater
 
 ### Prerequisites
 
-- Node.js >= 18
+- Node.js >= 22 (required by Hardhat 3; check with `node -v`)
 - npm
 
 ### Installation
@@ -69,6 +69,8 @@ node serve-gui.js
 ```
 
 Open `http://localhost:3000` in your browser.
+
+Note: each deploy rewrites `frontend/contracts.js` and `frontend/deployed-contracts.json` with the new contract addresses, so these files will show as modified in `git status`. Only commit them if a contract's ABI changed.
 
 ## Resetting State
 
