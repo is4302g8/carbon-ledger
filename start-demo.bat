@@ -5,7 +5,7 @@ if not exist node_modules (
     echo Installing dependencies...
     call npm install
     echo Compiling smart contracts...
-    call npx hardhat compile
+    call npx hardhat build
     echo.
 )
 

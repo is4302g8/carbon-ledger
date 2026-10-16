@@ -4,7 +4,7 @@ if [ ! -d "node_modules" ]; then
     echo "Installing dependencies..."
     npm install
     echo "Compiling smart contracts..."
-    npx hardhat compile
+    npx hardhat build
 fi
 
 if ! nc -z 127.0.0.1 8545 2>/dev/null; then
